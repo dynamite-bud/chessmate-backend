@@ -15,6 +15,10 @@ stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
 
 app = Flask(__name__)
 
+def get_centipawn(board):
+    stockfish.set_fen_position(board)
+    return stockfish.get_evaluation()["value"]
+
 def generate_puzzle(level, num_puzzles=1):
     # Initialize Stockfish engine
     engine = chess.engine.SimpleEngine.popen_uci("stockfish-windows-2022-x86-64-avx2.exe")
@@ -139,3 +143,10 @@ def get_puzzle() :
         "puzzles": puzzles
     }
     return jsonify(data)
+
+@app.route('/get-centipawn', methods=['POST'])
+def get_centipawn():
+    request_data = request.get_json()
+    board = request_data['board']
+    stockfish.set_fen_position(board)
+    return stockfish.get_evaluation()["value"]
