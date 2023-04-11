@@ -6,6 +6,25 @@ from stockfish import Stockfish
 stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
 app = Flask(__name__)
 
+opening_moves = [
+    ["e4", "e5","Nf3","Nc6","Bc4"],
+    ["e4", "e6", "d4","d5"],
+    ["e4", "e5", "Nf3", "Nc6", "Bb5"]
+]
+
+opening_title = [
+    "The Italian Game",
+    "The French Defense",
+    "The Ruy-Lopez"
+]
+opening_description = [
+    "The point is to control the center quickly with your pawn and knight and then put your bishop on its most dangerous square. You are also preparing to castle to safety.",
+    "The French Defense is one of the first strategic openings every chess player should learn. After e5 (now or later), both sides will have pawn chains. One risk of the French Defense is that the c8-bishop can be very hard to develop.",
+    "The Ruy Lopez is one of the oldest and most classic of all openings. It is named after a Spanish bishop who wrote one of the first books on chess. The Ruy Lopez attacks the knight which defends the e5-pawn. White hopes to use this attack to build more pressure on Black's central pawn."
+]
+
+
+
 @app.route('/')
 def hello() :
     data = {
@@ -32,5 +51,28 @@ def get_best_move():
 
     response = {
         "best_move": moves
+    }
+    return jsonify(response)
+
+@app.route('/get-opening', methods=['POST'])
+def get_oppening():
+    request_data = request.get_json()
+
+    rating = request_data['rating']
+
+    cnv_rating = (rating) * (10) / (2500)
+    
+    # convert cnv_rating to int
+    cnv_rating = int(cnv_rating)
+
+    # get opening
+    moves = opening_moves[:cnv_rating]
+    title = opening_title[:cnv_rating]
+    description = opening_description[:cnv_rating]
+
+    response = {
+        "moves": moves,
+        "title": title,
+        "description": description
     }
     return jsonify(response)
