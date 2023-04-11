@@ -4,12 +4,21 @@ import chess
 from stockfish import Stockfish
 
 stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
+# stockfish.set_depth(20)#How deep the AI looks
+# stockfish.set_skill_level(20)#Highest rank stockfish
+# stockfish.get_parameters()
+# stockfish.get_evaluation() -> {'type': 'cp', 'value': 0.0}
+# stockfish.set_fen_position("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+# stockfish.get_top_moves(3)
+
+
+
 app = Flask(__name__)
 
 opening_moves = [
-    ["e4", "e5","Nf3","Nc6","Bc4"],
-    ["e4", "e6", "d4","d5"],
-    ["e4", "e5", "Nf3", "Nc6", "Bb5"]
+    ["e4", "e5","Nf3","Nc6","Bc4"], #Simple
+    ["e4", "e6", "d4","d5"], #Simple
+    ["e4", "e5", "Nf3", "Nc6", "Bb5"] #Simple
 ]
 
 opening_title = [
@@ -60,7 +69,7 @@ def get_oppening():
 
     rating = request_data['rating']
 
-    cnv_rating = (rating) * (10) / (2500)
+    cnv_rating = (rating) * (3) / (2500)
     
     # convert cnv_rating to int
     cnv_rating = int(cnv_rating)
@@ -76,3 +85,16 @@ def get_oppening():
         "description": description
     }
     return jsonify(response)
+
+@app.route('/get-puzzle', methods=['POST'])
+def get_puzzle() :
+    request_data = request.get_json()
+
+    rating = request_data['rating']
+
+
+
+    data = {
+        "moves": "test"
+    }
+    return jsonify(data)
