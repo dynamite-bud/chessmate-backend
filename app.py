@@ -1,7 +1,9 @@
 from flask import Flask
 from flask import jsonify, request
-import chess
+import chess.engine
 from stockfish import Stockfish
+import random
+from openings import opening_moves, opening_title, opening_description
 
 stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
 # stockfish.set_depth(20)#How deep the AI looks
@@ -11,28 +13,63 @@ stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
 # stockfish.set_fen_position("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 # stockfish.get_top_moves(3)
 
-
-
 app = Flask(__name__)
 
-opening_moves = [
-    ["e4", "e5","Nf3","Nc6","Bc4"], #Simple
-    ["e4", "e6", "d4","d5"], #Simple
-    ["e4", "e5", "Nf3", "Nc6", "Bb5"] #Simple
-]
-
-opening_title = [
-    "The Italian Game",
-    "The French Defense",
-    "The Ruy-Lopez"
-]
-opening_description = [
-    "The point is to control the center quickly with your pawn and knight and then put your bishop on its most dangerous square. You are also preparing to castle to safety.",
-    "The French Defense is one of the first strategic openings every chess player should learn. After e5 (now or later), both sides will have pawn chains. One risk of the French Defense is that the c8-bishop can be very hard to develop.",
-    "The Ruy Lopez is one of the oldest and most classic of all openings. It is named after a Spanish bishop who wrote one of the first books on chess. The Ruy Lopez attacks the knight which defends the e5-pawn. White hopes to use this attack to build more pressure on Black's central pawn."
-]
+def generate_puzzle(level, num_puzzles=1):
+    # Initialize Stockfish engine
+    engine = chess.engine.SimpleEngine.popen_uci("stockfish-windows-2022-x86-64-avx2.exe")
+    board = chess.Board()
 
 
+    # Set skill level
+    engine.configure({"Skill Level": level})
+
+    # Analyze the current board position
+    analysis = engine.analyse(board, chess.engine.Limit(time=2.0))
+    score = analysis["score"]
+
+    # Get a list of legal moves
+    legal_moves = list(board.legal_moves)
+
+    if legal_moves:
+        # Select a random legal move
+        move = random.choice(legal_moves)
+
+        # Apply the random move to the board
+        board.push(move)
+
+        # Run Stockfish engine to find the best move for the current position
+        result = engine.play(board, chess.engine.Limit(time=2.0))
+        best_move = result.move
+
+        # Create the puzzle
+        puzzle = {
+            "fen": board.fen(),
+            "score": score.white().score(),
+            "best_move": best_move.uci()
+        }
+    else:
+        # Handle case where there are no legal moves
+        puzzle = {
+            "fen": board.fen(),
+            "score": score.white().score(),
+            "best_move": None
+        }
+    
+    # Clear the board for the next puzzle
+    board.reset()
+
+    # Close the engine
+    engine.quit()
+
+    return puzzle
+
+def get_levels_by_group(group_number):
+    if group_number == 7:
+        return [19, 20]
+    
+    start_number = (group_number - 1) * 3 + 1
+    return list(range(start_number, start_number + 3))
 
 @app.route('/')
 def hello() :
@@ -90,11 +127,15 @@ def get_oppening():
 def get_puzzle() :
     request_data = request.get_json()
 
-    rating = request_data['rating']
+    group = request_data['group']
 
+    levels = get_levels_by_group(group)
 
+    puzzles = []
+    for level in levels:
+        puzzles.append(generate_puzzle(level,1))
 
     data = {
-        "moves": "test"
+        "puzzles": puzzles
     }
     return jsonify(data)
