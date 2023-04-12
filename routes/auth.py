@@ -2,6 +2,8 @@ from flask import Flask, session
 from flask import jsonify, request
 from pymongo import MongoClient
 from flask import Blueprint
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 auth_app = Blueprint('auth', __name__)
 
@@ -22,7 +24,7 @@ def login():
         return jsonify({'error': 'Invalid username or password'}), 401
 
     # Check if password is correct
-    if password != user['password']:
+    if not check_password_hash(user['password'], password):
         return jsonify({'error': 'Invalid username or password'}), 401
 
     # Login user and create session
@@ -45,6 +47,8 @@ def register():
     if users.find_one({'username': username}):
         return jsonify({'error': 'Username already taken'}), 400
 
+    hashed_password = generate_password_hash(password)
+
     # Insert new user to database
-    users.insert_one({'username': username, 'password': password})
+    users.insert_one({'username': username, 'password': hashed_password})
     return jsonify({'message': 'User registered successfully'}), 201
