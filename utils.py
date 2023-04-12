@@ -27,11 +27,15 @@ def generate_puzzle(level, num_puzzles=1):
     legal_moves = list(board.legal_moves)
 
     if legal_moves:
-        # Select a random legal move
-        move = random.choice(legal_moves)
 
-        # Apply the random move to the board
-        board.push(move)
+        for n in range(30):
+            # Select a random legal move
+            move = random.choice(legal_moves)
+            # Apply the random move to the board
+            board.push(move)
+            # Analyze the new board position
+            legal_moves = list(board.legal_moves)
+
 
         # Run Stockfish engine to find the best move for the current position
         result = engine.play(board, chess.engine.Limit(time=2.0))

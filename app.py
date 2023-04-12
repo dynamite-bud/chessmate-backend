@@ -128,4 +128,13 @@ def update_rating():
     users.update_one({'username': username}, {'$set': {'rating': rating}})
     return jsonify({'message': 'Rating updated successfully'}), 200
 
+@app.route('/get-rating/<username>', methods=['GET'])
+def get_rating(username):
+    # Check if user exists in the database
+    user = users.find_one({'username': username})
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    rating = user['rating']
+    return jsonify({'rating': rating}), 200
 
