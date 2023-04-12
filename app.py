@@ -1,9 +1,19 @@
-from flask import Flask
+from flask import Flask, session
 from flask import jsonify, request
-import chess.engine
 from stockfish import Stockfish
-import random
-from openings import opening_moves, opening_title, opening_description
+from openings import *
+from utils import *
+from flask import Blueprint
+from routes.auth import auth_app
+from pymongo import MongoClient
+
+app = Flask(__name__)
+app.register_blueprint(auth_app)
+
+# MongoDB setup
+client = MongoClient('mongodb+srv://admin:BwHJZgZP5tyzrQuU@user-db.kia6aok.mongodb.net/?retryWrites=true&w=majority')
+db = client['users']
+users = db['users']
 
 stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
 # stockfish.set_depth(20)#How deep the AI looks
@@ -13,63 +23,10 @@ stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
 # stockfish.set_fen_position("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 # stockfish.get_top_moves(3)
 
-app = Flask(__name__)
-
-def generate_puzzle(level, num_puzzles=1):
-    # Initialize Stockfish engine
-    engine = chess.engine.SimpleEngine.popen_uci("stockfish-windows-2022-x86-64-avx2.exe")
-    board = chess.Board()
+app.config['SECRET_KEY'] = "q2edf4r5t6y7u8i9o0p8fdgh"
+app.config['MONGO_URI'] = "mongodb+srv://admin:BwHJZgZP5tyzrQuU@user-db.kia6aok.mongodb.net/?retryWrites=true&w=majority"
 
 
-    # Set skill level
-    engine.configure({"Skill Level": level})
-
-    # Analyze the current board position
-    analysis = engine.analyse(board, chess.engine.Limit(time=2.0))
-    score = analysis["score"]
-
-    # Get a list of legal moves
-    legal_moves = list(board.legal_moves)
-
-    if legal_moves:
-        # Select a random legal move
-        move = random.choice(legal_moves)
-
-        # Apply the random move to the board
-        board.push(move)
-
-        # Run Stockfish engine to find the best move for the current position
-        result = engine.play(board, chess.engine.Limit(time=2.0))
-        best_move = result.move
-
-        # Create the puzzle
-        puzzle = {
-            "fen": board.fen(),
-            "score": score.white().score(),
-            "best_move": best_move.uci()
-        }
-    else:
-        # Handle case where there are no legal moves
-        puzzle = {
-            "fen": board.fen(),
-            "score": score.white().score(),
-            "best_move": None
-        }
-    
-    # Clear the board for the next puzzle
-    board.reset()
-
-    # Close the engine
-    engine.quit()
-
-    return puzzle
-
-def get_levels_by_group(group_number):
-    if group_number == 7:
-        return [19, 20]
-    
-    start_number = (group_number - 1) * 3 + 1
-    return list(range(start_number, start_number + 3))
 
 @app.route('/')
 def hello() :
@@ -139,4 +96,45 @@ def get_puzzle() :
         "puzzles": puzzles
     }
     return jsonify(data)
+
+@app.route('/get-centipawn', methods=['POST'])
+def get_centipawn():
+    request_data = request.get_json()
+    board = request_data['board']
+    stockfish.set_fen_position(board)
+    return stockfish.get_evaluation()["value"]
+
+@app.route('/update-rating', methods=['POST'])
+def update_rating():
+
+    data = request.get_json()
+    
+    username = data['username']
+    rating = data['rating']
+
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized access'}), 401
+    
+    session_username = session['username']
+
+    if session_username != username:
+        return jsonify({'error': 'Unauthorized access'}), 401    
+
+    # Check if user exists in the database
+    if not users.find_one({'username': username}):
+        return jsonify({'error': 'User not found'}), 404
+
+    # Update user's rating
+    users.update_one({'username': username}, {'$set': {'rating': rating}})
+    return jsonify({'message': 'Rating updated successfully'}), 200
+
+@app.route('/get-rating/<username>', methods=['GET'])
+def get_rating(username):
+    # Check if user exists in the database
+    user = users.find_one({'username': username})
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    rating = user['rating']
+    return jsonify({'rating': rating}), 200
 
