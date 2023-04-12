@@ -139,3 +139,4 @@ def get_puzzle() :
         "puzzles": puzzles
     }
     return jsonify(data)
+
