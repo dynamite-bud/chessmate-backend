@@ -3,6 +3,7 @@ from flask import jsonify, request
 from stockfish import Stockfish
 from openings import *
 from utils import *
+from ratinglogic import *
 from flask import Blueprint
 from routes.auth import auth_app
 from pymongo import MongoClient
@@ -85,6 +86,15 @@ def get_puzzle() :
     request_data = request.get_json()
 
     group = request_data['group']
+    username = request_data['username']    
+
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized access'}), 401
+    
+    session_username = session['username']
+
+    if session_username != username:
+        return jsonify({'error': 'Unauthorized access'}), 401 
 
     levels = get_levels_by_group(group)
 
@@ -95,6 +105,14 @@ def get_puzzle() :
     data = {
         "puzzles": puzzles
     }
+
+    # Append the new puzzle to the user's puzzle history
+    users.update_one(
+        {"username": username},
+        {"$set": {"puzzle": puzzles}}
+    )
+
+
     return jsonify(data)
 
 @app.route('/get-centipawn', methods=['POST'])
@@ -109,8 +127,9 @@ def update_rating():
 
     data = request.get_json()
     
-    username = data['username']
     rating = data['rating']
+    username = data['username']
+    
 
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized access'}), 401
@@ -126,6 +145,12 @@ def update_rating():
 
     # Update user's rating
     users.update_one({'username': username}, {'$set': {'rating': rating}})
+    # Append the new rating to the user's rating history
+    users.update_one(
+        {"username": username},
+        {"$push": {"rating_history": rating}}
+    )
+
     return jsonify({'message': 'Rating updated successfully'}), 200
 
 @app.route('/get-rating/<username>', methods=['GET'])
@@ -138,3 +163,52 @@ def get_rating(username):
     rating = user['rating']
     return jsonify({'rating': rating}), 200
 
+@app.route('/get-initial-rating', methods=['POST'])
+def get_initial_rating():
+
+    data = request.get_json()
+    
+    username = data['username']
+    
+
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized access'}), 401
+    
+    session_username = session['username']
+
+    if session_username != username:
+        return jsonify({'error': 'Unauthorized access'}), 401    
+
+    player_fens = data['player_fens']
+    # Get centipawn from each fen
+    player_centipawns = []
+    for fen in player_fens:
+        stockfish.set_fen_position(fen)
+        player_centipawns.append(stockfish.get_evaluation()["value"])
+
+    user = users.find_one({'username': username})
+    puzzles = user['puzzle']
+
+    stockfish_centipawns = []
+
+    for puzzle in puzzles:
+        # set the fen to a board
+        board = chess.Board(puzzle['fen'])
+        # make a move on the board
+        board.push_san(puzzle['best_move'])
+        # update the board to stockfish
+        stockfish.set_fen_position(board.fen())
+        # get the centipawn
+        centipawn = stockfish.get_evaluation()["value"]
+
+        stockfish_centipawns.append(centipawn)
+
+    rating = initial_rating(player_centipawns, stockfish_centipawns)
+    
+
+
+    # Update user's rating
+    users.update_one({'username': username}, {'$set': {'rating': rating}})
+
+
+    return jsonify({'message': 'Rating updated successfully'}), 200

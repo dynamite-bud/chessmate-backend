@@ -2,8 +2,9 @@ from stockfish import Stockfish
 import random
 import chess.engine
 
+stockfish_path = "stockfish-windows-2022-x86-64-avx2.exe"
 
-stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
+stockfish = Stockfish(stockfish_path)
 
 
 def get_centipawn(board):
@@ -12,7 +13,7 @@ def get_centipawn(board):
 
 def generate_puzzle(level, num_puzzles=1):
     # Initialize Stockfish engine
-    engine = chess.engine.SimpleEngine.popen_uci("stockfish-windows-2022-x86-64-avx2.exe")
+    engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
     board = chess.Board()
 
 

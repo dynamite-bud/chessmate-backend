@@ -29,7 +29,7 @@ def login():
 
     # Login user and create session
     session['username'] = username
-    return jsonify({'message': 'Logged in successfully'}), 200
+    return jsonify({'message': 'Logged in successfully', 'rating': user['rating']}), 200
 
 @auth_app.route('/logout')
 def logout():
@@ -50,5 +50,5 @@ def register():
     hashed_password = generate_password_hash(password)
 
     # Insert new user to database
-    users.insert_one({'username': username, 'password': hashed_password})
+    users.insert_one({'username': username, 'password': hashed_password, 'wins': 0, 'losses': 0, 'draws': 0, 'rating': 0, 'rating_history': []})
     return jsonify({'message': 'User registered successfully'}), 201
