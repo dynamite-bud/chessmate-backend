@@ -63,9 +63,11 @@ def get_best_move():
 def get_oppening():
     request_data = request.get_json()
 
-    rating = request_data['user']
+    username = request_data['user']
+    user = users.find_one({'username': username})
+    rating = user['rating']
 
-    cnv_rating = (rating) * (3) / (2500)
+    cnv_rating = convert_rating(rating)
     
     # convert cnv_rating to int
     cnv_rating = int(cnv_rating)

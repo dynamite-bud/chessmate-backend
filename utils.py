@@ -6,6 +6,13 @@ stockfish_path = "stockfish-windows-2022-x86-64-avx2.exe"
 
 stockfish = Stockfish(stockfish_path)
 
+def convert_rating(rating):
+    if rating < 0:
+        return 3
+    elif rating <= 2500:
+        return int(((rating - 1) / 2499) * 5) + 4
+    else:
+        return 9
 
 def get_centipawn(board):
     stockfish.set_fen_position(board)
