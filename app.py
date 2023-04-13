@@ -73,14 +73,21 @@ def get_oppening():
     cnv_rating = int(cnv_rating)
 
     # get opening
-    moves = opening_moves[:cnv_rating]
-    title = opening_title[:cnv_rating]
-    description = opening_description[:cnv_rating]
+    # moves = opening_moves[:cnv_rating]
+    # title = opening_title[:cnv_rating]
+    # description = opening_description[:cnv_rating]
+
+    openings = []
+    for i in range(cnv_rating):
+        opening = {
+            "title": opening_title[i],
+            "moves": opening_moves[i],
+            "description": opening_description[i]
+        }
+        openings.append(opening)
 
     response = {
-        "moves": moves,
-        "title": title,
-        "description": description
+        "openings": openings
     }
     return jsonify(response)
 
