@@ -63,7 +63,7 @@ def get_best_move():
 def get_oppening():
     request_data = request.get_json()
 
-    rating = request_data['rating']
+    rating = request_data['user']
 
     cnv_rating = (rating) * (3) / (2500)
     
@@ -89,13 +89,13 @@ def get_puzzle() :
     group = request_data['group']
     username = request_data['username']    
 
-    if 'username' not in session:
-        return jsonify({'error': 'Unauthorized access'}), 401
+    # if 'username' not in session:
+    #     return jsonify({'error': 'Unauthorized access'}), 401
     
-    session_username = session['username']
+    # session_username = session['username']
 
-    if session_username != username:
-        return jsonify({'error': 'Unauthorized access'}), 401 
+    # if session_username != username:
+    #     return jsonify({'error': 'Unauthorized access'}), 401 
 
     levels = get_levels_by_group(group)
 
@@ -130,13 +130,13 @@ def update_rating():
     
     username = data['username']
 
-    if 'username' not in session:
-        return jsonify({'error': 'Unauthorized access'}), 401
+    # if 'username' not in session:
+    #     return jsonify({'error': 'Unauthorized access'}), 401
     
-    session_username = session['username']
+    # session_username = session['username']
 
-    if session_username != username:
-        return jsonify({'error': 'Unauthorized access'}), 401
+    # if session_username != username:
+    #     return jsonify({'error': 'Unauthorized access'}), 401
 
     
     user = users.find_one({'username': username})
@@ -162,8 +162,8 @@ def update_rating():
 def get_rating(username):
     # Check if user exists in the database
     user = users.find_one({'username': username})
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
+    # if not user:
+    #     return jsonify({'error': 'User not found'}), 404
     
     rating = user['rating']
     return jsonify({'rating': rating}), 200
@@ -176,13 +176,13 @@ def get_initial_rating():
     username = data['username']
     
 
-    if 'username' not in session:
-        return jsonify({'error': 'Unauthorized access'}), 401
+    # if 'username' not in session:
+    #     return jsonify({'error': 'Unauthorized access'}), 401
     
-    session_username = session['username']
+    # session_username = session['username']
 
-    if session_username != username:
-        return jsonify({'error': 'Unauthorized access'}), 401    
+    # if session_username != username:
+    #     return jsonify({'error': 'Unauthorized access'}), 401    
 
     player_fens = data['player_fens']
     # Get centipawn from each fen
