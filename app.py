@@ -16,7 +16,7 @@ client = MongoClient('mongodb+srv://admin:BwHJZgZP5tyzrQuU@user-db.kia6aok.mongo
 db = client['users']
 users = db['users']
 
-stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
+stockfish = Stockfish(stockfish_path)
 
 # stockfish.set_depth(20)#How deep the AI looks
 # stockfish.set_skill_level(20)#Highest rank stockfish
@@ -63,7 +63,7 @@ def get_best_move():
 def get_oppening():
     request_data = request.get_json()
 
-    username = request_data['user']
+    username = request_data['username']
     user = users.find_one({'username': username})
     rating = user['rating']
 

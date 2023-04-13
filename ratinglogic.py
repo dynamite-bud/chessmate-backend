@@ -3,8 +3,9 @@ import pymc3 as pm
 from stockfish import Stockfish
 import numpy as np
 import pymc3 as pm
+from utils import *
 
-def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=2000, K=32, stockfish_path="stockfish-windows-2022-x86-64-avx2.exe"):
+def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=2000, K=32, stockfish_path=stockfish_path):
     """
     Updates the player's rating based on centipawn values from the current move using Bayesian inference and MCMC sampling.
 
@@ -19,6 +20,8 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
     Returns:
         float: The updated rating.
     """
+    print("----------------------------")
+    print(fen_list)
     
     # Initialize Stockfish engine
     stockfish = Stockfish(path=stockfish_path)
@@ -27,10 +30,11 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
     centipawn_diffs = []
     for i in range(len(fen_list) - 1):
         stockfish.set_fen_position(fen_list[i])
-        current_turn = 'white' if ' w ' in fen_list[i] else 'black'
+        current_turn = player_color
 
         if current_turn == player_color:
             player_eval = stockfish.get_evaluation()
+            print(player_eval)
             player_centipawn = player_eval["value"] if player_eval["type"] == "cp" else 0
 
             # Get Stockfish's best move and its evaluation
@@ -45,6 +49,7 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
             centipawn_diff = player_centipawn - stockfish_centipawn
             centipawn_diffs.append(centipawn_diff)
 
+    print(centipawn_diffs)
     # Define prior distribution of player's rating
     with pm.Model() as model:
         mu = pm.Normal('mu', mu=previous_rating, sigma=1000)
