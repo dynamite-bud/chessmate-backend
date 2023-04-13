@@ -17,6 +17,7 @@ db = client['users']
 users = db['users']
 
 stockfish = Stockfish("stockfish-windows-2022-x86-64-avx2.exe")
+
 # stockfish.set_depth(20)#How deep the AI looks
 # stockfish.set_skill_level(20)#Highest rank stockfish
 # stockfish.get_parameters()
@@ -127,9 +128,7 @@ def update_rating():
 
     data = request.get_json()
     
-    rating = data['rating']
     username = data['username']
-    
 
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized access'}), 401
@@ -137,12 +136,18 @@ def update_rating():
     session_username = session['username']
 
     if session_username != username:
-        return jsonify({'error': 'Unauthorized access'}), 401    
+        return jsonify({'error': 'Unauthorized access'}), 401
 
-    # Check if user exists in the database
-    if not users.find_one({'username': username}):
-        return jsonify({'error': 'User not found'}), 404
+    
+    user = users.find_one({'username': username})
+    
+    fen_list = data['fens']
+    previous_rating = user['rating']
+    player_color = data['player_color']
 
+    rating = adaptive_rating_system(previous_rating, fen_list, player_color)
+
+    rating = round(rating, 2)
     # Update user's rating
     users.update_one({'username': username}, {'$set': {'rating': rating}})
     # Append the new rating to the user's rating history
@@ -151,7 +156,7 @@ def update_rating():
         {"$push": {"rating_history": rating}}
     )
 
-    return jsonify({'message': 'Rating updated successfully'}), 200
+    return jsonify({'message': 'Rating updated successfully', 'rating': rating}), 200
 
 @app.route('/get-rating/<username>', methods=['GET'])
 def get_rating(username):
@@ -205,10 +210,10 @@ def get_initial_rating():
 
     rating = initial_rating(player_centipawns, stockfish_centipawns)
     
-
+    rating = round(rating, 2)
 
     # Update user's rating
     users.update_one({'username': username}, {'$set': {'rating': rating}})
 
 
-    return jsonify({'message': 'Rating updated successfully'}), 200
+    return jsonify({'message': 'Rating updated successfully', 'rating': rating}), 200
