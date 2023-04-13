@@ -16,4 +16,4 @@
     4. Rook (for advanced players who have mastered the game's fundamental principles and can execute advanced tactics)
     5. Queen (for expert players who have a deep understanding of the game and can execute highly complex strategies)
     6. King (for master players who have achieved a high level of mastery in the game and can compete at a professional level)
-    7. Grandmaster (for elite players who have achieved the highest level of skill and can compete at the highest levels of international competition.)
+    7. Super Sayan GM (for elite players who have achieved the highest level of skill and can compete at the highest levels of international competition.)
