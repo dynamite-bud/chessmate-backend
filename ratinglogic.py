@@ -20,6 +20,7 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
     Returns:
         float: The updated rating.
     """
+
     # print("----------------------------")
     # print(fen_list)
     def rating_to_skill_level(rating):
@@ -31,13 +32,15 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
     
     # Initialize Stockfish engine
     stockfish = Stockfish(path=stockfish_path)
-    stockfish.set_skill_level(rating_to_skill_level(previous_rating))
+    # stockfish.set_skill_level(rating_to_skill_level(previous_rating))
+    stockfish.set_skill_level(10)
+    stockfish.set_depth(10)
 
     # Get centipawn differences for player's moves
     centipawn_diffs = []
     for i in range(len(fen_list) - 1):
-        stockfish.set_fen_position(fen_list[i])
-        current_turn = player_color
+        stockfish.set_fen_position(fen_list[i+1])
+        current_turn = "white" if "w" in fen_list[i] else "black"
 
         if current_turn == player_color:
             player_eval = stockfish.get_evaluation()
@@ -45,9 +48,14 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
             player_centipawn = player_eval["value"] if player_eval["type"] == "cp" else 0
 
             # Get Stockfish's best move and its evaluation
+            stockfish.set_fen_position(fen_list[i])
             best_move = stockfish.get_best_move()
-            stockfish.set_fen_position(fen_list[i + 1])
+            # create a new board with the best move applied
+            board = chess.Board(fen_list[i])
+            board.push_uci(best_move)
+            stockfish.set_fen_position(board.fen())
             best_eval = stockfish.get_evaluation()
+            print(best_eval)
 
             # Get centipawn value for Stockfish's best move
             stockfish_centipawn = best_eval["value"] if best_eval["type"] == "cp" else 0

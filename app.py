@@ -7,8 +7,9 @@ from ratinglogic import *
 from flask import Blueprint
 from routes.auth import auth_app
 from pymongo import MongoClient
-
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 app.register_blueprint(auth_app)
 
 # MongoDB setup
@@ -40,24 +41,33 @@ def hello() :
 @app.route('/best-move', methods=['POST'])
 def get_best_move():
     request_data = request.get_json()
+    print(request_data)
     # eg. request_data = {"board": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "count": 5}
 
     board = request_data['board']
 
-    stockfish.set_depth(20)  # How deep the AI looks
-    stockfish.set_skill_level(20)  # Highest rank stockfish
+    stockfish.set_depth(10)  # How deep the AI looks
+    stockfish.set_skill_level(10)  # Highest rank stockfish
     stockfish.set_fen_position(board)
-    best_move = stockfish.get_top_moves(request_data['count'])
+    # try and if fails try again
+    try:
+        best_move = stockfish.get_top_moves(request_data['count'])
 
-    moves = []
-    for data in best_move:
-        moves.append(data["Move"])
-    print(moves)
+        moves = []
+        for data in best_move:
+            moves.append(data["Move"])
+        print(moves)
 
-    response = {
-        "best_move": moves
-    }
-    return jsonify(response)
+        response = {
+            "best_move": moves
+        }
+        return jsonify(response)
+    except:
+        random_move = random.choice(list(chess.Board(board).legal_moves))
+        response = {
+            "best_move": random_move
+        }
+        return jsonify(response)
 
 @app.route('/get-opening', methods=['POST'])
 def get_oppening():
@@ -153,6 +163,7 @@ def update_rating():
     fen_list = data['fens']
     previous_rating = user['rating']
     player_color = data['player_color']
+    player_color = 'white' if player_color == 'w' else 'black'
 
     rating = adaptive_rating_system(previous_rating, fen_list, player_color)
 
@@ -175,7 +186,8 @@ def get_rating(username):
     #     return jsonify({'error': 'User not found'}), 404
     
     rating = user['rating']
-    return jsonify({'rating': rating}), 200
+    history = user['rating_history']
+    return jsonify({'rating': rating, 'history': history}), 200
 
 @app.route('/get-initial-rating', methods=['POST'])
 def get_initial_rating():

@@ -5,7 +5,7 @@ opening_moves = [
     ["e4", "e5", "Nf3", "Nc6", "Bb5"],
     # Intermediate Openings
     ["d4", "d5", "c4"],
-    ["e4", "c5"],
+    ["e4", "c5", "Kf3", "d6", "d4"],
     ["d4", "Nf6", "c4", "g6"],
     # Advanced Openings
     ["d4", "Nf6", "c4", "e6", "Nf3", "d5"],
