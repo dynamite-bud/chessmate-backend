@@ -20,11 +20,18 @@ def adaptive_rating_system(previous_rating, fen_list, player_color, num_samples=
     Returns:
         float: The updated rating.
     """
-    print("----------------------------")
-    print(fen_list)
+    # print("----------------------------")
+    # print(fen_list)
+    def rating_to_skill_level(rating):
+        if rating < 0:
+            return 0
+        skill_level = int((rating / 3000) * 20)
+        return max(0, min(skill_level, 20))
+
     
     # Initialize Stockfish engine
     stockfish = Stockfish(path=stockfish_path)
+    stockfish.set_skill_level(rating_to_skill_level(previous_rating))
 
     # Get centipawn differences for player's moves
     centipawn_diffs = []
